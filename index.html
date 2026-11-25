@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uppercrusteve · 定时流水线、数据抓取与清洗</title>
+<meta name="description" content="夜间自动化流水线、多源抓取与快照清洗、网关接入与元数据整理。工具带测试、写明边界，断在哪能续跑。">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="assets/glass.css">
+</head>
+<body>
+
+<div class="field" aria-hidden="true">
+  <span class="a"></span><span class="b"></span><span class="c"></span>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <nav class="glass" aria-label="主导航">
+    <span class="brand">uppercrusteve</span>
+    <a href="#pipeline">流水线</a>
+    <a href="#capture">抓取</a>
+    <a href="#worked">已开源</a>
+    <a href="https://github.com/uppercrusteve">GitHub</a>
+  </nav>
+
+  <header class="hero glass">
+    <span class="eyebrow"><span class="dot" aria-hidden="true"></span>夜间空窗自动执行</span>
+    <h1>
+      定时流水线
+      <span class="thin">数据抓取与清洗 · 网关接入与元数据整理</span>
+    </h1>
+    <p class="lede">
+      工具是干活的法子：每道容易出错的工序先手工做一遍，再固化成能复算、能测、断在哪能续跑的代码。
+      夜里机器空着就跑采集和校验，白天只处理需要人判断的那一小截。
+    </p>
+    <div class="rule" aria-label="工作方式">
+      <span>门禁在前，不过就整晚跳过</span>
+      <span>只认硬信号，不认热闹</span>
+      <span>失败留断点，下次只补没做完的</span>
+      <span>原始快照先落盘，再解析</span>
+    </div>
+    <a class="btn" href="#pipeline">看怎么跑 →</a>
+  </header>
+
+  <div class="grid three">
+    <article class="card glass">
+      <span class="tag">Pipeline</span>
+      <h2>时段门禁</h2>
+      <p>只在北京时间 01:00–06:00 且机器空闲时动。三关全过才动手，忙就整晚跳过，不硬跑。</p>
+    </article>
+    <article class="card glass">
+      <span class="tag">Capture</span>
+      <h2>多源快照</h2>
+      <p>原始响应先落盘再解析，解析失败留原文件。源分可用、阻塞两档，阻塞的标记后照常出报告。</p>
+    </article>
+    <article class="card glass">
+      <span class="tag">Gate</span>
+      <h2>硬信号判定</h2>
+      <p>测试全绿、有来源说明、slug 合法、没发过、同名仓库不存在，五条同时满足才允许发生发布动作。</p>
+    </article>
+  </div>
+
+  <section id="pipeline">
+    <h3 class="sect">流水线怎么跑</h3>
+    <p class="sect-note">采集 → 打分筛 → 转化 → 校验 → 发布，阶段之间靠磁盘文件传，不靠会话记忆。</p>
+    <ul class="list">
+      <li class="glass">
+        <a href="#pipeline">采集只出原始元数据</a>
+        <p>编程趋势榜加定向查询，只留 fullName 和原始字段，判断交给打分脚本。</p>
+      </li>
+      <li class="glass">
+        <a href="#pipeline">去重指纹压旧闻</a>
+        <p>每轮把仓库和当前 star 数落盘，同一仓下轮 star 没涨两成就扣分，沉底靠数据不靠手感。</p>
+      </li>
+      <li class="glass">
+        <a href="#pipeline">一步一证据，断了能续</a>
+        <p>每个完成步骤交 sha256 证据，产物被改动或删除，该步骤下次自动打回重做。</p>
+      </li>
+      <li class="glass">
+        <a href="#pipeline">失败记账并弹通知</a>
+        <p>任一步失败写错误字段，仓库建成而页面没挂上，下次只补页面不重建仓库。</p>
+      </li>
+    </ul>
+  </section>
+
+  <section id="capture">
+    <h3 class="sect">抓取与清洗</h3>
+    <p class="sect-note">编码、识别、兜底都按最坏情况写，不为了齐整把流程挂死。</p>
+    <ul class="list">
+      <li class="glass">
+        <a href="#capture">中文载荷固定走 UTF-8 文件</a>
+        <p>控制台是 GBK，直接内联中文必然解析失败，一律写文件后整体提交。</p>
+      </li>
+      <li class="glass">
+        <a href="#capture">图片源靠二次校验兜底</a>
+        <p>读图不会自己报错，所以拿场次号和时刻做交叉校验，对不上就记为可疑而不是静默通过。</p>
+      </li>
+      <li class="glass">
+        <a href="#capture">调度先判再跑</a>
+        <p>同槽位十分钟内跑过就跳过，代理不通直接退出，日志按天按槽落 UTF-8 文件。</p>
+      </li>
+      <li class="glass">
+        <a href="#capture">跑完逐项验产物</a>
+        <p>缺一个文件就返回非零，异常退出码分档，计划任务失败能被看见。</p>
+      </li>
+    </ul>
+  </section>
+
+  <section id="worked">
+    <h3 class="sect">已开源</h3>
+    <p class="sect-note">全部 MIT、带测试、写明边界和「它不干什么」。</p>
+    <ul class="list">
+      <li class="glass">
+        <a href="https://github.com/uppercrusteve/forge-lint">forge-lint</a>
+        <p>给一夜之间攒出来的 skill / 工具目录做体检，规则来自真实出事点。</p>
+      </li>
+      <li class="glass">
+        <a href="https://github.com/uppercrusteve/stage-ckpt">stage-ckpt</a>
+        <p>步级断点：断在哪步从哪步续，证据被改过就作废那一步。</p>
+      </li>
+      <li class="glass">
+        <a href="https://github.com/uppercrusteve/score-bench">score-bench</a>
+        <p>打分器排序回归台，正负例配对量 agreement，掉线就红。</p>
+      </li>
+      <li class="glass">
+        <a href="https://github.com/uppercrusteve/zh-punct">zh-punct</a>
+        <p>中文标点硬伤体检，代码块和链接先掩掉，误报优先压下去。</p>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>页面模板 MIT · 液态玻璃纯 CSS，无第三方依赖</span>
+    <a href="https://github.com/uppercrusteve/liquid-glass-profile">取模板</a>
+    <a href="https://github.com/uppercrusteve/ams-check/issues">开 issue</a>
+  </footer>
+
+</div>
+
+<script src="assets/glass.js"></script>
+</body>
+</html>
